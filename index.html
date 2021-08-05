@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>The Intra-doc Links Saga</title>
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/black.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section><h3>The Intra-doc Links Saga</h3>
+					<small>by Joshua Nelson and Manish Goregaokar</small>
+				</section>
+				<section><h3>What are intra-doc links?</h3>
+					<p>A way to link to items by name, not URL</p>
+					<pre><code class="language-rust">/// Link to [f()]
+pub struct S;
+
+pub fn f() {}</code></pre>
+					<!-- <p><a href="https://doc.rust-lang.org/nightly/rustdoc/linking-to-items-by-name.html">Intra-doc links</a> are a feature of <code>rustdoc</code> that allow you to link to '<a href="https://doc.rust-lang.org/reference/items.html">items</a>' - functions, types, and more - by their name, instead of a hard-coded URL. This lets you have accurate links even if your types are <a href="https://github.com/rust-lang/rust/issues/32129">re-exported in a different module or crate</a>. Here is a simple example:</p> -->
+				</section>
+				<section><h3>Why are they useful?</h3>
+					<ul>
+						<li>Shorter to type</li>
+						<li>No need to hard-code rustdoc's URL structure</li>
+						<li>Know where crate docs live (e.g. whether they're on docs.rs or built locally)</li>
+						<li>Warn on broken links</li>
+						<li>Work even with re-exports (<a href="https://play.rust-lang.org/?gist=5b5bd347f77195084770393ca820648c">playground</a>)</li>
+					</ul>
+				</section>
+				<section><h3>History</h3>
+					<ul>
+						<li>July 2017: <a href="https://github.com/rust-lang/rfcs/pull/1946">RFC</a></li>
+						<li>January 2018: <a href="https://github.com/rust-lang/rust/pull/47046">Initial implementation</a></li>
+						<li>September 2020: <a href="https://github.com/rust-lang/rust/pull/74430">Stabilization</a> (in 1.48.0)</li>
+					</ul>
+				</section>
+				<section><h3>Why did it take so long to stabilize?</h3>
+					<p>Cross-crate re-exports!</p>
+					<pre><code class="language-rust">// Crate `inner`
+/// Link to [f()]
+pub struct S;
+pub fn f() {}</code></pre><pre><code class="language-rust">// outer crate
+pub use inner::S;
+</code></pre>
+					<p>Rustdoc would use the scope of the re-export, not the original item.</p>
+				</section>	
+				<section><h3>How was it fixed?</h3>
+					<ul>
+						<li><strong>@petrochenkov</strong> <a href="https://github.com/rust-lang/rust/pull/63400">changed the resolver</a> to allow determining the items in scope for other crates, not just the current module.</li>
+						<li><strong>@jyn514</strong> <a href="https://github.com/rust-lang/rust/pull/73101">changed the intra-doc link pass</a> not to assume items were in the local crate.</li>
+					</ul>
+					But that's not the whole story!
+				</section>	
+				<section><h3>Not so fast!</h3>
+					<p>The rustdoc fix originally caused <a href="https://github.com/rust-lang/rust/issues/71820">this code</a> to crash (!!)</p>
+					<pre><code class="language-rust">#![feature(decl_macro)]
+fn main() {
+	|| {
+		macro m() {}
+	};
+}</code></pre>
+					<p>Rustdoc was transforming it internally to</p>
+						<pre><code class="language-rust">fn main() {
+	{
+		macro m { () =&gt; { } }
+	}
+	loop { }
+}</code></pre>
+				</section>
+				<section><h3><code>everybody_loops</code></h3>
+					<ul>
+						<li><a href="https://github.com/rust-lang/rust/pull/43348">Used for rustdoc to allow documenting multiple different platforms at once</a></li>
+						<li><a href="https://github.com/rust-lang/rust/pull/53002">It turns out not everything can be stripped</a></li>
+						<li><a href="https://github.com/rust-lang/rust/issues/71820">The issue that caused rustdoc to crash after my change is discovered</a></li>
+						<li><a href="https://github.com/rust-lang/rust/pull/73566">Stop using <code>everybody_loops</code> for rustdoc</a></li>
+					</ul>
+				</section>
+				<!-- TODO: maybe talk about how this was possible because of the query system? -->
+				<!--
+				<section><h3></h3>
+				-->
+				<section><h3>Questions?</h3>
+				</section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+	</body>
+</html>
