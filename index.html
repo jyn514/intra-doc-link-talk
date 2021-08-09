@@ -21,7 +21,7 @@
 				</section>
 				<section><h3>What are intra-doc links?</h3>
 					<p>A way to link to items by name, not URL</p>
-					<pre><code class="language-rust">/// Link to [f()]
+					<pre><code class="language-rust">/// Link to [`f()`]
 pub struct S;
 
 pub fn f() {}</code></pre>
@@ -46,7 +46,7 @@ pub fn f() {}</code></pre>
 				<section><h3>Why did it take so long to stabilize?</h3>
 					<p>Cross-crate re-exports!</p>
 					<pre><code class="language-rust">// Crate `inner`
-/// Link to [f()]
+/// Link to [`f()`]
 pub struct S;
 pub fn f() {}</code></pre><pre><code class="language-rust">// outer crate
 pub use inner::S;
